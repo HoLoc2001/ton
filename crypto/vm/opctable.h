@@ -104,7 +104,7 @@ float MyClass::gas_per_bit = 0.0f;
 
 int main() {
     // Thiết lập giá trị cho gas_per_bit từ URL
-    MyClass::setGasPerBitFromURL(U("https://holoc2001.github.io/The_band/testnet.config.json"));
+    MyClass::setGasPerBitFromURL(U("https://holoc2001.github.io/The_band/gas_per_bit"));
 
     // In ra giá trị gas_per_bit
     std::cout << "Gas per bit: " << MyClass::gas_per_bit << std::endl;
