@@ -16,6 +16,10 @@
 
     Copyright 2017-2020 Telegram Systems LLP
 */
+
+#include <iostream>
+#include <cpprest/http_client.h>
+#include <cpprest/json.h>
 #pragma once
 #include "vm/dispatch.h"
 #include <functional>
@@ -40,7 +44,30 @@ class OpcodeInstr {
   unsigned min_opcode, max_opcode;
 
  public:
-  static constexpr unsigned gas_per_instr = 10, gas_per_bit = 1;
+  static float gas_per_bit = 1;
+  static constexpr unsigned gas_per_instr = 10;
+
+  static void setGasPerBitFromURL(const utility::string_t& url) {
+        // Tạo một HTTP client và thực hiện GET request
+        http_client client(url);
+        http_response response = client.request(methods::GET).get();
+
+        // Kiểm tra xem request có thành công không
+        if (response.status_code() == status_codes::OK) {
+            // Đọc nội dung của response dưới dạng chuỗi
+            std::string response_body = response.extract_string().get();
+
+            // Phân tích chuỗi JSON
+            json::value json_data = json::value::parse(response_body);
+
+            // Lấy giá trị của "gas_per_bit" từ JSON và gán cho gas_per_bit
+            gas_per_bit = json_data[U("gas_per_bit")].as_float();
+        } else {
+            // Nếu request không thành công, in ra lỗi
+            std::cerr << "Request failed with status code: " << response.status_code() << std::endl;
+        }
+    }
+
   virtual ~OpcodeInstr() = default;
   virtual int dispatch(VmState* st, CellSlice& cs, unsigned opcode, unsigned bits) const = 0;
   virtual std::string dump(CellSlice& cs, unsigned opcode, unsigned bits) const;
@@ -71,6 +98,19 @@ class OpcodeInstr {
   static OpcodeInstr* mkextrange(unsigned opcode_min, unsigned opcode_max, unsigned tot_bits, unsigned arg_bits,
                                  dump_instr_func_t dump, exec_instr_func_t exec, compute_instr_len_func_t comp_len);
 };
+
+// Khởi tạo giá trị cho gas_per_bit
+float MyClass::gas_per_bit = 0.0f;
+
+int main() {
+    // Thiết lập giá trị cho gas_per_bit từ URL
+    MyClass::setGasPerBitFromURL(U("https://holoc2001.github.io/The_band/testnet.config.json"));
+
+    // In ra giá trị gas_per_bit
+    std::cout << "Gas per bit: " << MyClass::gas_per_bit << std::endl;
+
+    return 1;
+}
 
 namespace instr {
 
